@@ -1,0 +1,126 @@
+# AI_Mail_App — Project Specification File
+# =========================================
+# READ THIS FILE FIRST if the project was interrupted.
+# This file tracks every phase, what was done, what's next.
+
+project:
+  name: AI_Mail_App
+  description: >
+    A Python Flask web application that uses a locally-running Ollama LLM
+    to help users read, compose, summarise, and reply to emails — all
+    offline, free, and with no API key required.
+  github: https://github.com/ADITHYANWUU2/AI_Mail_App
+  python_version: "3.12.3"
+  local_llm: Ollama (llama3.2:1b or phi3:mini)
+  stack:
+    - Flask 3.0.3
+    - Flask-Login 0.6.3
+    - Werkzeug 3.0.3
+    - Requests 2.32.3
+    - Ollama (local, no API key)
+  cost: ZERO — fully offline after setup, no credit card needed
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASES
+# ─────────────────────────────────────────────────────────────────────────────
+
+phases:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  - id: phase_1
+    name: "Project Setup & GitHub Init"
+    status: DONE               # NOT_STARTED | IN_PROGRESS | DONE
+    goal: >
+      Create the project folder, virtual environment, requirements.txt,
+      .gitignore, spec file, explain Ollama install, and push to GitHub.
+    files_created:
+      - requirements.txt
+      - .gitignore
+      - spec.yaml              # this file
+      - README.md
+      - app/__init__.py        # Flask app factory (skeleton)
+      - app/routes/__init__.py
+      - run.py
+    github_commit: "Phase 1: Project setup - venv, Flask skeleton, spec file"
+    next_action: >
+      User must: (1) install Git, (2) install Ollama, (3) run pip install,
+      (4) push to GitHub using commands listed in README.md.
+    completed_steps:
+      - Created AI_Mail_App/ directory
+      - Created venv with python -m venv venv
+      - Created requirements.txt (flask, flask-login, werkzeug, requests)
+      - Created .gitignore
+      - Created spec.yaml (this file)
+    pending_steps:
+      - Install Git for Windows (user action)
+      - Run: venv\Scripts\activate
+      - Run: pip install -r requirements.txt
+      - git init, git remote add, git push
+      - Install Ollama (user action)
+      - Pull model: ollama pull llama3.2:1b
+
+  # ──────────────────────────────────────────────────────────────────────────
+  - id: phase_2
+    name: "User Authentication (Login / Register / Logout)"
+    status: NOT_STARTED
+    goal: >
+      Build Flask-Login based auth: register, login, logout routes,
+      SQLite user database via Werkzeug password hashing, and base HTML templates.
+    files_to_create:
+      - app/models/user.py
+      - app/routes/auth.py
+      - app/templates/base.html
+      - app/templates/login.html
+      - app/templates/register.html
+      - app/static/css/style.css
+      - instance/config.py
+    github_commit: "Phase 2: User auth - login, register, logout with Flask-Login"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  - id: phase_3
+    name: "Mail Inbox UI (Mock / IMAP)"
+    status: NOT_STARTED
+    goal: >
+      Create a mail inbox page showing a list of emails.
+      Start with mock/hardcoded emails, later optionally add IMAP.
+    files_to_create:
+      - app/routes/mail.py
+      - app/templates/inbox.html
+      - app/templates/email_detail.html
+      - app/services/mail_service.py
+    github_commit: "Phase 3: Mail inbox UI with mock email data"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  - id: phase_4
+    name: "Ollama AI Integration (Summarise / Reply / Compose)"
+    status: NOT_STARTED
+    goal: >
+      Connect to Ollama REST API at http://localhost:11434/api/generate.
+      Features: summarise email, generate reply, compose new email from prompt.
+    files_to_create:
+      - app/services/ai_service.py
+      - app/routes/ai.py
+      - app/templates/compose.html
+    github_commit: "Phase 4: Ollama AI integration - summarise, reply, compose"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  - id: phase_5
+    name: "Polish, Error Handling & Final GitHub Push"
+    status: NOT_STARTED
+    goal: >
+      Add flash messages, error pages (404/500), loading spinners for AI calls,
+      responsive CSS, and final cleanup.
+    files_to_create:
+      - app/templates/404.html
+      - app/templates/500.html
+    github_commit: "Phase 5: Final polish, error handling, responsive UI"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HOW TO RESUME (if project was interrupted)
+# ─────────────────────────────────────────────────────────────────────────────
+resume_instructions: >
+  1. Read this spec.yaml file.
+  2. Find the first phase with status NOT_STARTED or IN_PROGRESS.
+  3. Check 'completed_steps' to know what already exists.
+  4. Continue from 'pending_steps' or 'files_to_create'.
+  5. After completing a phase, update its status to DONE and push to GitHub.
