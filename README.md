@@ -1,8 +1,20 @@
 # 📧 AI Mail App — Intelligent Webmail Assistant
 
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-ai--mail--app--v5pq.onrender.com-brightgreen)](https://ai-mail-app-v5pq.onrender.com)
+
 A modern, full-featured webmail client powered by **Python (Flask)**, **SQLite**, and **Google Gemini AI** (with local Ollama compatibility).
 
 AI Mail App turns a standard webmail interface into an intelligent productivity copilot that drafts emails from natural language prompts, refines tone on demand, generates contextual subject lines, summarizes long message threads, suggests one-click smart replies, and automatically triages inbox priorities.
+
+---
+
+## 🌐 Live Demo
+
+> 🔗 **[https://ai-mail-app-v5pq.onrender.com](https://ai-mail-app-v5pq.onrender.com)**
+
+**Test Credentials:**
+- Username: `alice` | Password: `password123`
+- Username: `bob` | Password: `password123`
 
 ---
 
