@@ -62,7 +62,7 @@ phases:
   # ──────────────────────────────────────────────────────────────────────────
   - id: phase_2
     name: "User Authentication (Login / Register / Logout)"
-    status: NOT_STARTED
+    status: DONE
     goal: >
       Build Flask-Login based auth: register, login, logout routes,
       SQLite user database via Werkzeug password hashing, and base HTML templates.
@@ -78,42 +78,54 @@ phases:
 
   # ──────────────────────────────────────────────────────────────────────────
   - id: phase_3
-    name: "Mail Inbox UI (Mock / IMAP)"
-    status: NOT_STARTED
+    name: "Mail Inbox UI & Full Webmail Client"
+    status: DONE
     goal: >
-      Create a mail inbox page showing a list of emails.
-      Start with mock/hardcoded emails, later optionally add IMAP.
-    files_to_create:
-      - app/routes/mail.py
+      Build complete email workflow: Compose, Inbox, Sent, Drafts, Trash,
+      Email detail view with mark-as-read, delete to trash, restore, and delete forever.
+      Extended features: Reply (prefill sender & quoted body), Forward (prefill fwd body),
+      Full-text Search (by subject & body), File Attachments (upload & download).
+    files_created:
+      - database.py (enhanced with email CRUD, unread counts, soft-delete, attachments, search)
+      - app/routes/mail.py (compose, inbox, sent, drafts, trash, reply, forward, search, download)
+      - app/templates/mail_layout.html (with search bar & live unread badge)
       - app/templates/inbox.html
-      - app/templates/email_detail.html
-      - app/services/mail_service.py
-    github_commit: "Phase 3: Mail inbox UI with mock email data"
+      - app/templates/mail_list.html (Sent, Drafts, Trash, Search results, attachment indicator)
+      - app/templates/compose.html (with file attachment input)
+      - app/templates/email_detail.html (with reply, forward, attachment download box)
+      - app/static/css/style.css (complete email client theme)
+      - uploads/ (secure storage directory for uploaded files)
 
   # ──────────────────────────────────────────────────────────────────────────
   - id: phase_4
-    name: "Ollama AI Integration (Summarise / Reply / Compose)"
-    status: NOT_STARTED
+    name: "Google Gemini AI Integration (Summarise / Reply / Compose / Tone / Subject)"
+    status: DONE
     goal: >
-      Connect to Ollama REST API at http://localhost:11434/api/generate.
-      Features: summarise email, generate reply, compose new email from prompt.
-    files_to_create:
-      - app/services/ai_service.py
-      - app/routes/ai.py
-      - app/templates/compose.html
-    github_commit: "Phase 4: Ollama AI integration - summarise, reply, compose"
+      Connect to Google Gemini API (generateContent endpoint) using GEMINI_API_KEY from .env.
+      Features: summarise email, generate reply, compose new email from prompt, tone adjustment, subject generation.
+    files_created:
+      - ai/ai_helper.py (Google Gemini REST client with python-dotenv & robust error handling)
+      - .env.example and .env (API key configuration)
+      - ai/__init__.py & app/ai/ai_helper.py
+      - app/templates/test_ai.html (/test-ai route & interactive prompt runner)
+      - app/routes/mail.py (/summarize, /smart-reply, /compose/ai-draft, /compose/rewrite-tone, /compose/generate-subject)
+      - app/templates/email_detail.html (✨ Summarize Email and 💬 Smart Reply buttons)
+      - app/templates/compose.html (✨ AI Draft Assistant, Tone toolbar, Generate Subject)
+      - app/static/css/style.css (tone buttons, badges, status indicators, responsive design)
 
   # ──────────────────────────────────────────────────────────────────────────
   - id: phase_5
-    name: "Polish, Error Handling & Final GitHub Push"
-    status: NOT_STARTED
+    name: "Polish, Error Handling & Final Verification"
+    status: DONE
     goal: >
       Add flash messages, error pages (404/500), loading spinners for AI calls,
-      responsive CSS, and final cleanup.
-    files_to_create:
-      - app/templates/404.html
-      - app/templates/500.html
-    github_commit: "Phase 5: Final polish, error handling, responsive UI"
+      responsive CSS, and complete end-to-end test verification.
+    files_created:
+      - app/templates/404.html (custom 404 page)
+      - app/templates/500.html (custom 500 error page)
+      - app/__init__.py (registered 404 & 500 error handlers)
+      - app/static/css/style.css (responsive mobile breakpoints & media queries)
+      - scratch/test_full_suite.py (automated 10-suite end-to-end verification)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HOW TO RESUME (if project was interrupted)

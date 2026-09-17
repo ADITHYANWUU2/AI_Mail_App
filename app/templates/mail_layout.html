@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ folder|title }} — AI Mail App{% endblock %}
+
+{% block content %}
+<div class="mail-app">
+
+  <!-- ══ Sidebar ════════════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <a href="{{ url_for('mail.compose') }}" class="compose-btn">✏️ Compose</a>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('mail.inbox') }}"
+         class="nav-item {% if folder=='inbox' %}active{% endif %}">
+        <span class="icon">📬</span> Inbox
+        {% if unread > 0 %}
+          <span class="badge">{{ unread }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('mail.sent') }}"
+         class="nav-item {% if folder=='sent' %}active{% endif %}">
+        <span class="icon">📤</span> Sent
+      </a>
+      <a href="{{ url_for('mail.drafts') }}"
+         class="nav-item {% if folder=='drafts' %}active{% endif %}">
+        <span class="icon">📝</span> Drafts
+      </a>
+      <a href="{{ url_for('mail.trash') }}"
+         class="nav-item {% if folder=='trash' %}active{% endif %}">
+        <span class="icon">🗑️</span> Trash
+      </a>
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 8px 0;">
+      <a href="{{ url_for('mail.test_ai') }}" class="nav-item">
+        <span class="icon">✨</span> Test Gemini AI
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ══ Main Content ═══════════════════════════════════════════════════════ -->
+  <section class="mail-main">
+    <div class="search-bar-wrapper">
+      <form method="GET" action="{{ url_for('mail.search') }}" class="search-form">
+        <input type="text" name="q" value="{{ search_query if search_query is defined else '' }}" placeholder="🔍 Search emails by subject or body text..." class="search-input">
+        <button type="submit" class="btn btn-sm btn-primary">Search</button>
+        {% if search_query is defined and search_query %}
+          <a href="{{ url_for('mail.inbox') }}" class="btn btn-sm btn-ghost">Clear</a>
+        {% endif %}
+      </form>
+    </div>
+    {% block mail_content %}{% endblock %}
+  </section>
+
+</div>
+{% endblock %}

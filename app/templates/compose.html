@@ -1,0 +1,318 @@
+{% extends "mail_layout.html" %}
+{% block title %}Compose Email — AI Mail App{% endblock %}
+
+{% block mail_content %}
+<div class="compose-container">
+  <div class="compose-header">
+    <h2>✏️ New Message</h2>
+  </div>
+
+  <!-- ── AI Compose Assistant Card ────────────────────────────────────── -->
+  <div class="ai-compose-card">
+    <div class="ai-compose-header">
+      <span class="ai-badge">✨ AI DRAFT ASSISTANT</span>
+      <span class="ai-model-tag">Powered by Google Gemini AI</span>
+    </div>
+    <div class="ai-compose-input-row">
+      <input type="text" id="ai-instruction" placeholder='Describe what you want to send (e.g. "send project update to sir")' class="ai-prompt-input">
+      <button type="button" id="ai-draft-btn" class="btn btn-sm btn-ai">
+        ⚡ Generate Draft
+      </button>
+    </div>
+    <div id="ai-compose-status" class="ai-compose-status" style="display: none;"></div>
+  </div>
+
+  <form method="POST" action="{{ url_for('mail.compose') }}" class="compose-form" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="to">To (Username):</label>
+      <input type="text" id="to" name="to" value="{{ prefill.to }}" placeholder="Recipient username" required autocomplete="off">
+    </div>
+
+    <!-- ── Subject Field with Generate Subject Button ──────────────────── -->
+    <div class="form-group">
+      <div class="subject-header-row">
+        <label for="subject" style="margin-bottom: 0;">Subject:</label>
+        <button type="button" id="gen-subject-btn" class="btn btn-sm btn-generate-subject" title="Auto-generate subject from body">
+          ✨ Generate Subject
+        </button>
+      </div>
+      <div class="subject-input-group">
+        <input type="text" id="subject" name="subject" value="{{ prefill.subject }}" placeholder="Email subject" required>
+      </div>
+      <div id="subject-status" class="subject-status" style="display: none;"></div>
+    </div>
+
+    <!-- ── Message Body with AI Tone Adjustment Toolbar ────────────────── -->
+    <div class="form-group">
+      <div class="tone-toolbar-header">
+        <label for="body" style="margin-bottom: 0;">Message Body:</label>
+        <div class="tone-actions">
+          <span class="tone-label">✨ Adjust Tone:</span>
+          <div class="tone-buttons">
+            <button type="button" class="btn-tone active" data-tone="Professional">💼 Professional</button>
+            <button type="button" class="btn-tone" data-tone="Friendly">😊 Friendly</button>
+            <button type="button" class="btn-tone" data-tone="Formal">👔 Formal</button>
+            <button type="button" class="btn-tone" data-tone="Concise">⚡ Concise</button>
+          </div>
+          <button type="button" id="rewrite-tone-btn" class="btn btn-sm btn-tone-apply">
+            🔄 Rewrite
+          </button>
+          <button type="button" id="undo-tone-btn" class="btn btn-sm btn-ghost" style="display: none;">
+            ↩️ Undo
+          </button>
+        </div>
+      </div>
+      <div id="tone-status" class="tone-status" style="display: none;"></div>
+      <textarea id="body" name="body" rows="10" placeholder="Type your email content here...">{{ prefill.body }}</textarea>
+    </div>
+
+    <div class="form-group attachment-group">
+      <label for="attachment">📎 Attachment (optional):</label>
+      <input type="file" id="attachment" name="attachment" class="file-input">
+      <p class="hint">Allowed: PDF, DOC, Images (PNG, JPG), TXT, CSV, ZIP (Max 16MB)</p>
+    </div>
+
+    <div class="compose-actions">
+      <button type="submit" name="action" value="send" class="btn btn-primary">📤 Send Email</button>
+      <button type="submit" name="action" value="draft" class="btn btn-secondary">💾 Save as Draft</button>
+      <a href="{{ url_for('mail.inbox') }}" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const btn = document.getElementById("ai-draft-btn");
+  const input = document.getElementById("ai-instruction");
+  const status = document.getElementById("ai-compose-status");
+  const subjectField = document.getElementById("subject");
+  const bodyField = document.getElementById("body");
+  const genSubjectBtn = document.getElementById("gen-subject-btn");
+  const subjectStatus = document.getElementById("subject-status");
+
+  // ── Subject Button Active State Logic (active when subject is empty) ──
+  function updateSubjectBtnState() {
+    if (!genSubjectBtn) return;
+    const isSubjectEmpty = subjectField.value.trim() === "";
+    if (isSubjectEmpty) {
+      genSubjectBtn.disabled = false;
+      genSubjectBtn.classList.remove("disabled-btn");
+      genSubjectBtn.title = "Generate subject line from email body";
+    } else {
+      genSubjectBtn.disabled = true;
+      genSubjectBtn.classList.add("disabled-btn");
+      genSubjectBtn.title = "Subject is already filled. Clear it to generate a new one.";
+    }
+  }
+
+  subjectField.addEventListener("input", updateSubjectBtnState);
+  updateSubjectBtnState(); // Initial check
+
+  // ── Generate Subject Button Handler ──
+  if (genSubjectBtn) {
+    genSubjectBtn.addEventListener("click", async function() {
+      const bodyContent = bodyField.value.trim();
+      if (!bodyContent) {
+        subjectStatus.style.display = "block";
+        subjectStatus.className = "subject-status status-error";
+        subjectStatus.innerText = "Please write some message body content first.";
+        bodyField.focus();
+        return;
+      }
+
+      const origText = genSubjectBtn.innerHTML;
+      genSubjectBtn.innerHTML = "⏳ Generating...";
+      genSubjectBtn.disabled = true;
+
+      subjectStatus.style.display = "block";
+      subjectStatus.className = "subject-status status-loading";
+      subjectStatus.innerHTML = "<em>Local AI is crafting a subject line based on your message...</em>";
+
+      try {
+        const response = await fetch("{{ url_for('mail.generate_subject') }}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          body: JSON.stringify({ body: bodyContent })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          subjectField.value = data.subject;
+          subjectStatus.className = "subject-status status-success";
+          subjectStatus.innerHTML = "✅ Subject generated! You can edit or replace it before sending.";
+          updateSubjectBtnState();
+          subjectField.focus();
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          subjectStatus.className = "subject-status status-error";
+          subjectStatus.innerText = errData.error || "Error: Could not generate subject. Check your GEMINI_API_KEY.";
+          updateSubjectBtnState();
+        }
+      } catch (err) {
+        subjectStatus.className = "subject-status status-error";
+        subjectStatus.innerText = "Connection error: Could not reach the server.";
+        updateSubjectBtnState();
+      } finally {
+        genSubjectBtn.innerHTML = origText;
+      }
+    });
+  }
+
+  // ── AI Draft Generator ──
+  if (btn) {
+    btn.addEventListener("click", async function() {
+      const text = input.value.trim();
+      if (!text) {
+        status.style.display = "block";
+        status.className = "ai-compose-status status-error";
+        status.innerText = "Please describe what you want to write first.";
+        input.focus();
+        return;
+      }
+
+      const origText = btn.innerHTML;
+      btn.innerHTML = "⏳ Generating Draft...";
+      btn.disabled = true;
+      status.style.display = "block";
+      status.className = "ai-compose-status status-loading";
+      status.innerHTML = "<em>Local AI is writing your subject line and email body...</em>";
+
+      try {
+        const response = await fetch("{{ url_for('mail.ai_compose') }}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          body: JSON.stringify({ prompt: text })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          subjectField.value = data.subject;
+          bodyField.value = data.body;
+
+          status.className = "ai-compose-status status-success";
+          status.innerHTML = "✅ Draft generated! You can freely edit both subject and body below before sending.";
+          btn.innerHTML = "⚡ Regenerate Draft";
+
+          updateSubjectBtnState();
+          subjectField.focus();
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          status.className = "ai-compose-status status-error";
+          status.innerText = errData.error || "Error: Could not generate draft. Check your GEMINI_API_KEY.";
+          btn.innerHTML = origText;
+        }
+      } catch (err) {
+        status.className = "ai-compose-status status-error";
+        status.innerText = "Connection error: Could not reach the server.";
+        btn.innerHTML = origText;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  }
+
+  // ── AI Tone Rewriter & Undo ──
+  let previousBodyHistory = [];
+  let selectedTone = "Professional";
+
+  const toneBtns = document.querySelectorAll(".btn-tone");
+  const rewriteBtn = document.getElementById("rewrite-tone-btn");
+  const undoBtn = document.getElementById("undo-tone-btn");
+  const toneStatus = document.getElementById("tone-status");
+
+  toneBtns.forEach(b => {
+    b.addEventListener("click", function() {
+      toneBtns.forEach(x => x.classList.remove("active"));
+      this.classList.add("active");
+      selectedTone = this.getAttribute("data-tone");
+    });
+  });
+
+  if (rewriteBtn) {
+    rewriteBtn.addEventListener("click", async function() {
+      const currentBody = bodyField.value.trim();
+      if (!currentBody) {
+        toneStatus.style.display = "block";
+        toneStatus.className = "tone-status status-error";
+        toneStatus.innerText = "Please write or generate some email text first before adjusting tone.";
+        bodyField.focus();
+        return;
+      }
+
+      const origBtnText = rewriteBtn.innerHTML;
+      rewriteBtn.innerHTML = `⏳ Rewriting (${selectedTone})...`;
+      rewriteBtn.disabled = true;
+
+      toneStatus.style.display = "block";
+      toneStatus.className = "tone-status status-loading";
+      toneStatus.innerHTML = `<em>Local AI is rewriting message in a <strong>${selectedTone}</strong> tone...</em>`;
+
+      try {
+        const response = await fetch("{{ url_for('mail.rewrite_tone') }}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          body: JSON.stringify({
+            body: currentBody,
+            tone: selectedTone
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          previousBodyHistory.push(bodyField.value);
+          undoBtn.style.display = "inline-block";
+
+          bodyField.value = data.rewritten_body;
+
+          toneStatus.className = "tone-status status-success";
+          toneStatus.innerHTML = `✅ Rewritten in <strong>${selectedTone}</strong> tone! Click "Undo" anytime to revert.`;
+          rewriteBtn.innerHTML = "🔄 Rewrite Again";
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          toneStatus.className = "tone-status status-error";
+          toneStatus.innerText = errData.error || "Error: Could not rewrite tone. Check your GEMINI_API_KEY.";
+          rewriteBtn.innerHTML = origBtnText;
+        }
+      } catch (err) {
+        toneStatus.className = "tone-status status-error";
+        toneStatus.innerText = "Connection error: Could not reach the server.";
+        rewriteBtn.innerHTML = origBtnText;
+      } finally {
+        rewriteBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── Undo Button ──
+  if (undoBtn) {
+    undoBtn.addEventListener("click", function() {
+      if (previousBodyHistory.length > 0) {
+        const prev = previousBodyHistory.pop();
+        bodyField.value = prev;
+        toneStatus.className = "tone-status status-success";
+        toneStatus.innerHTML = "↩️ Reverted to previous version.";
+        if (previousBodyHistory.length === 0) {
+          undoBtn.style.display = "none";
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

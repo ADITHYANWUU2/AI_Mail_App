@@ -1,0 +1,77 @@
+{% extends "mail_layout.html" %}
+{% block title %}{{ folder|title }} — AI Mail App{% endblock %}
+
+{% block mail_content %}
+<div class="folder-header">
+  <div>
+    <h2>
+      {% if folder == 'sent' %}📤 Sent Mail
+      {% elif folder == 'drafts' %}📝 Drafts
+      {% elif folder == 'trash' %}🗑️ Trash
+      {% elif folder == 'search' %}🔍 Search Results for "{{ search_query }}"
+      {% else %}{{ folder|title }}
+      {% endif %}
+    </h2>
+    {% if folder in ['sent', 'search'] %}
+      <p class="ai-filter-note">ℹ️ AI-assisted classification — not a guaranteed spam/priority filter</p>
+    {% endif %}
+  </div>
+  <span class="email-count">{{ emails|length }} message{% if emails|length != 1 %}s{% endif %}</span>
+</div>
+
+{% if emails %}
+  <ul class="email-list">
+    {% for email in emails %}
+    <li class="email-row">
+      <a href="{{ url_for('mail.view_email', email_id=email.id, folder=folder) }}">
+        <div class="email-row-inner">
+          <div class="email-meta-left">
+            <span class="sender">
+              {% if folder == 'sent' %}
+                To: {{ email.recipient_name }}
+              {% elif folder == 'drafts' %}
+                Draft
+              {% else %}
+                {% if email.sender_name == current_user.username %}
+                  To: {{ email.recipient_name }}
+                {% else %}
+                  From: {{ email.sender_name }}
+                {% endif %}
+              {% endif %}
+            </span>
+          </div>
+          <div class="email-subject-preview">
+            <span class="subject">{{ email.subject }}</span>
+            <span class="preview">— {{ email.body[:80] }}{% if email.body|length > 80 %}…{% endif %}</span>
+          </div>
+          <div class="email-meta-right">
+            {% if email.attachment_filename %}
+              <span title="Has attachment">📎</span>
+            {% endif %}
+            {% if email.priority == 'high' %}
+              <span class="priority-badge high" title="AI Priority: High">🔴 High</span>
+            {% elif email.priority == 'low' %}
+              <span class="priority-badge low" title="AI Priority: Low">⚪ Low</span>
+            {% elif email.priority == 'normal' %}
+              <span class="priority-badge normal" title="AI Priority: Normal">🟡 Normal</span>
+            {% endif %}
+            <span class="timestamp">{{ email.timestamp[:16].replace('T', ' ') }}</span>
+          </div>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <p>
+      {% if folder == 'search' %}
+        No emails found matching "{{ search_query }}".
+      {% else %}
+        No messages in {{ folder }}.
+      {% endif %}
+    </p>
+  </div>
+{% endif %}
+{% endblock %}

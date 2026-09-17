@@ -1,0 +1,197 @@
+{% extends "mail_layout.html" %}
+{% block title %}{{ email.subject }} — AI Mail App{% endblock %}
+
+{% block mail_content %}
+<div class="email-detail-container">
+  <div class="email-detail-header">
+    <div class="header-nav">
+      <a href="{{ url_for('mail.' + folder) if folder in ['inbox', 'sent', 'drafts', 'trash'] else url_for('mail.inbox') }}" class="back-link">
+        ← Back to {{ folder|title }}
+      </a>
+    </div>
+
+    <div class="email-detail-actions">
+      {% if folder == 'trash' %}
+        <form method="POST" action="{{ url_for('mail.restore_email', email_id=email.id) }}" style="display:inline;">
+          <button type="submit" class="btn btn-sm btn-secondary">♻️ Restore</button>
+        </form>
+        <form method="POST" action="{{ url_for('mail.delete_email', email_id=email.id) }}" style="display:inline;" onsubmit="return confirm('Permanently delete this email? This cannot be undone.');">
+          <button type="submit" class="btn btn-sm btn-danger">❌ Delete Forever</button>
+        </form>
+      {% else %}
+        <button type="button" id="summarize-btn" class="btn btn-sm btn-ai">
+          ✨ Summarize Email
+        </button>
+        <button type="button" id="smart-reply-btn" class="btn btn-sm btn-smart-reply">
+          💬 Smart Reply
+        </button>
+        <a href="{{ url_for('mail.reply', email_id=email.id) }}" class="btn btn-sm btn-primary">
+          ↩️ Reply
+        </a>
+        <a href="{{ url_for('mail.forward', email_id=email.id) }}" class="btn btn-sm btn-secondary">
+          ↪️ Forward
+        </a>
+        <form method="POST" action="{{ url_for('mail.trash_email', email_id=email.id) }}" style="display:inline;">
+          <input type="hidden" name="folder" value="{{ folder }}">
+          <button type="submit" class="btn btn-sm btn-danger">🗑️ Move to Trash</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="email-card">
+    <div class="email-header-meta">
+      <h2 class="email-title">{{ email.subject }}</h2>
+      <div class="meta-row">
+        <span class="meta-label">From:</span>
+        <span class="meta-value"><strong>{{ email.sender_name }}</strong></span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">To:</span>
+        <span class="meta-value"><strong>{{ email.recipient_name }}</strong></span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Date:</span>
+        <span class="meta-value">{{ email.timestamp[:19].replace('T', ' ') }}</span>
+      </div>
+    </div>
+
+    <!-- ── Smart Reply Box ────────────────────────────────────────────── -->
+    <div id="smart-reply-container" class="smart-reply-container" style="display:none;">
+      <div class="smart-reply-card">
+        <div class="smart-reply-header">
+          <span class="smart-reply-badge">💬 SUGGESTED REPLIES</span>
+          <span class="smart-reply-hint">Click a suggestion to edit before sending:</span>
+        </div>
+        <div id="smart-reply-options" class="smart-reply-options">
+          <!-- Injected dynamically via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AI Summary Box (Displayed above original email) ────────────────── -->
+    <div id="ai-summary-container" class="ai-summary-container" {% if not ai_summary %}style="display:none;"{% endif %}>
+      <div class="ai-summary-card">
+        <div class="ai-summary-header">
+          <span class="ai-badge">✨ AI SUMMARY</span>
+          <span class="ai-model-tag">Powered by Google Gemini AI</span>
+        </div>
+        <div class="ai-summary-body" id="ai-summary-text">{{ ai_summary if ai_summary else '' }}</div>
+      </div>
+    </div>
+
+    <hr class="email-divider">
+
+    <div class="email-section-label">ORIGINAL EMAIL CONTENT:</div>
+    <div class="email-body" style="white-space: pre-wrap; line-height: 1.6;">{{ email.body if email.body else '(No content)' }}</div>
+
+    {% if email.attachment_filename %}
+      <div class="attachment-box">
+        <div class="attachment-info">
+          <span class="attachment-icon">📎</span>
+          <div class="attachment-meta">
+            <span class="attachment-name"><strong>{{ attachment_display_name }}</strong></span>
+            <span class="attachment-sub">Attachment</span>
+          </div>
+        </div>
+        <a href="{{ url_for('mail.download_attachment', email_id=email.id) }}" class="btn btn-sm btn-secondary download-btn">
+          ⬇️ Download
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const sumBtn = document.getElementById("summarize-btn");
+  const sumContainer = document.getElementById("ai-summary-container");
+  const sumText = document.getElementById("ai-summary-text");
+
+  if (sumBtn) {
+    sumBtn.addEventListener("click", async function() {
+      const origText = sumBtn.innerHTML;
+      sumBtn.innerHTML = "⏳ Summarizing with local AI...";
+      sumBtn.disabled = true;
+
+      sumContainer.style.display = "block";
+      sumText.innerHTML = "<em>Analyzing email and generating bullet points with Gemini AI...</em>";
+
+      try {
+        const response = await fetch("{{ url_for('mail.summarize_email', email_id=email.id) }}", {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          sumText.innerText = data.summary;
+          sumBtn.innerHTML = "✨ Re-summarize";
+        } else {
+          sumText.innerText = "Error: Could not generate summary. Please check your GEMINI_API_KEY in .env.";
+          sumBtn.innerHTML = origText;
+        }
+      } catch (err) {
+        sumText.innerText = "Connection error: Could not reach the server.";
+        sumBtn.innerHTML = origText;
+      } finally {
+        sumBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── Smart Reply handler ──
+  const replyBtn = document.getElementById("smart-reply-btn");
+  const replyContainer = document.getElementById("smart-reply-container");
+  const replyOptions = document.getElementById("smart-reply-options");
+
+  if (replyBtn) {
+    replyBtn.addEventListener("click", async function() {
+      const origText = replyBtn.innerHTML;
+      replyBtn.innerHTML = "⏳ Generating suggestions...";
+      replyBtn.disabled = true;
+
+      replyContainer.style.display = "block";
+      replyOptions.innerHTML = "<div class='reply-loading'><em>Generating 3 smart reply suggestions with Gemini AI...</em></div>";
+
+      try {
+        const response = await fetch("{{ url_for('mail.smart_reply', email_id=email.id) }}", {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          replyOptions.innerHTML = "";
+          const replyBaseUrl = "{{ url_for('mail.reply', email_id=email.id) }}";
+
+          data.suggestions.forEach((item, index) => {
+            const btn = document.createElement("a");
+            btn.className = "smart-reply-option";
+            btn.href = replyBaseUrl + "?ai_text=" + encodeURIComponent(item);
+            btn.innerHTML = `<span class="opt-num">${index + 1}</span> <span class="opt-text">${item}</span> <span class="opt-arrow">→ Edit</span>`;
+            replyOptions.appendChild(btn);
+          });
+
+          replyBtn.innerHTML = "💬 Regenerate Replies";
+        } else {
+          replyOptions.innerHTML = "<div class='reply-error'>Could not generate smart replies. Please check your GEMINI_API_KEY in .env.</div>";
+          replyBtn.innerHTML = origText;
+        }
+      } catch (err) {
+        replyOptions.innerHTML = "<div class='reply-error'>Connection error: Could not reach server.</div>";
+        replyBtn.innerHTML = origText;
+      } finally {
+        replyBtn.disabled = false;
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

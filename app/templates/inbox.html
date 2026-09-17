@@ -1,0 +1,52 @@
+{% extends "mail_layout.html" %}
+{% block title %}Inbox — AI Mail App{% endblock %}
+
+{% block mail_content %}
+<div class="folder-header">
+  <div>
+    <h2>📬 Inbox</h2>
+    <p class="ai-filter-note">ℹ️ AI-assisted classification — not a guaranteed spam/priority filter</p>
+  </div>
+  <span class="email-count">{{ emails|length }} message{% if emails|length != 1 %}s{% endif %}</span>
+</div>
+
+{% if emails %}
+  <ul class="email-list">
+    {% for email in emails %}
+    <li class="email-row {% if not email.is_read %}unread{% endif %}">
+      <a href="{{ url_for('mail.view_email', email_id=email.id, folder='inbox') }}">
+        <div class="email-row-inner">
+          <div class="email-meta-left">
+            <span class="unread-dot {% if not email.is_read %}show{% endif %}"></span>
+            <span class="sender">{{ email.sender_name }}</span>
+          </div>
+          <div class="email-subject-preview">
+            <span class="subject">{{ email.subject }}</span>
+            <span class="preview">— {{ email.body[:80] }}{% if email.body|length > 80 %}…{% endif %}</span>
+          </div>
+          <div class="email-meta-right">
+            {% if email.attachment_filename %}
+              <span title="Has attachment">📎</span>
+            {% endif %}
+            {% if email.priority == 'high' %}
+              <span class="priority-badge high" title="AI Priority: High / Urgent">🔴 High</span>
+            {% elif email.priority == 'low' %}
+              <span class="priority-badge low" title="AI Priority: Low">⚪ Low</span>
+            {% else %}
+              <span class="priority-badge normal" title="AI Priority: Normal">🟡 Normal</span>
+            {% endif %}
+            <span class="timestamp">{{ email.timestamp[:16].replace('T', ' ') }}</span>
+          </div>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <p>Your inbox is empty.</p>
+    <a href="{{ url_for('mail.compose') }}" class="btn btn-ghost">Send your first email →</a>
+  </div>
+{% endif %}
+{% endblock %}

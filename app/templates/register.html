@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Register — AI Mail App{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <div class="card-icon">🚀</div>
+    <h2>Create Account</h2>
+    <p class="subtitle">Free forever · Runs offline · No credit card</p>
+
+    <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username"
+               placeholder="e.g. adithyan" minlength="3" required
+               autocomplete="username">
+        <p class="hint">At least 3 characters, letters and numbers only.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email"
+               placeholder="you@example.com" required
+               autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               placeholder="Min 6 characters" minlength="6" required
+               autocomplete="new-password">
+        <p class="hint">
+          🔒 Your password is hashed (scrambled) before saving.
+          We never store it as plain text.
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password"
+               placeholder="Repeat your password" required
+               autocomplete="new-password">
+      </div>
+
+      <button type="submit" class="btn btn-primary">Create Account →</button>
+
+    </form>
+
+    <hr class="divider">
+    <div class="auth-footer">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

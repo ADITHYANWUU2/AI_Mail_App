@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Gemini AI Test — AI Mail App{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+      <span style="font-size: 2.2rem;">✨</span>
+      <div>
+        <h2 style="font-size: 1.6rem; color: #fff; margin: 0;">Google Gemini AI Test</h2>
+        <p style="color: var(--muted); font-size: 0.85rem; margin: 2px 0 0 0;">
+          Connected via <code>GEMINI_API_KEY</code> (Google AI Studio)
+        </p>
+      </div>
+    </div>
+
+    <form method="GET" action="{{ url_for('mail.test_ai') }}" style="margin-bottom: 28px;">
+      <label style="display: block; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;">
+        Test Prompt:
+      </label>
+      <div style="display: flex; gap: 10px;">
+        <input type="text" name="prompt" value="{{ prompt }}" style="flex: 1; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; outline: none;">
+        <button type="submit" class="btn btn-primary" style="margin: 0; width: auto; padding: 12px 24px;">Run Prompt →</button>
+      </div>
+    </form>
+
+    <div style="margin-top: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <label style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--muted);">
+          Gemini Response:
+        </label>
+        <span style="font-size: 0.75rem; background: rgba(108, 99, 255, 0.15); color: var(--accent); padding: 2px 8px; border-radius: 6px;">
+          Model: gemini-1.5-flash
+        </span>
+      </div>
+
+      <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-size: 1rem; color: #e0e0f0; line-height: 1.6; min-height: 100px; white-space: pre-wrap;">
+        {{ response }}
+      </div>
+    </div>
+
+    <div style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 20px;">
+      <a href="{{ url_for('mail.inbox') }}" style="color: var(--muted); font-size: 0.9rem;">← Back to Mailbox</a>
+      <span style="color: var(--success-tx); font-size: 0.85rem; font-weight: 500;">✨ Gemini API active</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
