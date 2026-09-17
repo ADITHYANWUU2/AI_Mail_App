@@ -145,6 +145,32 @@ add_styled_title(
 
 add_paragraph("AI Mail App is a modern, full-featured webmail simulator and email assistant. It transforms a standard email interface into an intelligent productivity copilot that drafts emails from brief user prompts, refines tone on demand, automatically generates contextual subject lines, summarizes message threads into bullet points, suggests one-click smart replies, and automatically triages inbox priority.")
 
+# ----------------- LIVE DEMO LINK -----------------
+add_heading_1("🌐 Live Deployed Application")
+
+p_live = doc.add_paragraph()
+p_live.paragraph_format.space_before = Pt(0)
+p_live.paragraph_format.space_after = Pt(6)
+r_live_lbl = p_live.add_run("🚀 Live URL: ")
+r_live_lbl.font.bold = True
+r_live_lbl.font.name = 'Calibri'
+r_live_lbl.font.size = Pt(12)
+r_live_lbl.font.color.rgb = COLOR_PRIMARY
+add_hyperlink(p_live, "https://ai-mail-app-v5pq.onrender.com", "https://ai-mail-app-v5pq.onrender.com", color="2E75B6")
+
+add_paragraph("The application is live and fully functional. Use the test credentials below to explore all features without any local setup.")
+
+add_bullet("alice  |  Password: password123", bold_prefix="Test Account 1: ")
+add_bullet("bob  |  Password: password123", bold_prefix="Test Account 2: ")
+
+p_github = doc.add_paragraph()
+p_github.paragraph_format.space_before = Pt(6)
+p_github.paragraph_format.space_after = Pt(8)
+r_gh_lbl = p_github.add_run("📦 GitHub Repository: ")
+r_gh_lbl.font.bold = True
+r_gh_lbl.font.name = 'Calibri'
+add_hyperlink(p_github, "https://github.com/ADITHYANWUU2/AI_Mail_App", "https://github.com/ADITHYANWUU2/AI_Mail_App", color="2E75B6")
+
 # ----------------- VIDEO DEMO & DRIVE LINK -----------------
 add_heading_1("🎥 Video Demonstration & Screenshots")
 
@@ -296,6 +322,6 @@ for item in checklist_items:
     add_bullet(item)
 
 # Save the document
-output_path = r"C:\Users\mathi\OneDrive\Documents\AI_Mail_App\README.docx"
+output_path = r"C:\Users\mathi\OneDrive\Documents\AI_Mail_App\README_v2.docx"
 doc.save(output_path)
 print("SUCCESS: README.docx generated successfully at", output_path)
